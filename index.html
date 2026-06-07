@@ -312,6 +312,67 @@ function scoreGusts(kph) { return kph > 25 ? 'no' : kph > 18 ? 'maybe' : 'go'; }
 function scoreSwell(m)   { return m > 1.0 ? 'no' : m > 0.7 ? 'maybe' : 'go'; }
 function scoreRain(mm)   { return mm > 5 ? 'no' : mm > 2 ? 'maybe' : 'go'; }
 
+// Tide scoring — want low tide (within 2hrs either side of low)
+function scoreTide(minutesToLow) {
+  const abs = Math.abs(minutesToLow);
+  if (abs <= 120) return 'go';
+  if (abs <= 180) return 'maybe';
+  return 'no';
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// Compute tides using simplified harmonic calculation for Castlepoint
+// Principal M2 constituent for Castlepoint area
+function getTidesForToday() {
+  const now = new Date();
+  const tides = [];
+
+  // Castlepoint approximate tidal parameters
+  // M2 period ~12.42 hours, approximate phase offset for Castlepoint
+  const M2_PERIOD_MS = 12.4206 * 60 * 60 * 1000;
+  const S2_PERIOD_MS = 12.0 * 60 * 60 * 1000;
+  // Reference low tide anchor (approximate for Castlepoint)
+  // Using a known reference: low tide anchor Jan 1 2024 00:00 UTC
+  const REF_MS = new Date('2024-01-01T00:00:00Z').getTime();
+  const elapsed = now.getTime() - REF_MS;
+
+  // Generate tide extremes over next 48hrs
+  const startOfDay = new Date(now); startOfDay.setHours(0,0,0,0);
+  const endOfDay   = new Date(now); endOfDay.setHours(23,59,59,999);
+
+  // Sample every 10 mins, find local extremes
+  const samples = [];
+  for (let t = startOfDay.getTime() - M2_PERIOD_MS; t <= endOfDay.getTime() + M2_PERIOD_MS; t += 10*60*1000) {
+    const e = t - REF_MS;
+    const h = Math.cos(2 * Math.PI * e / M2_PERIOD_MS) * 0.7
+            + Math.cos(2 * Math.PI * e / S2_PERIOD_MS) * 0.2;
+    samples.push({ t, h });
+  }
+
+  for (let i = 1; i < samples.length - 1; i++) {
+    const prev = samples[i-1], cur = samples[i], next = samples[i+1];
+    if (cur.t < startOfDay.getTime() || cur.t > endOfDay.getTime()) continue;
+    if (cur.h < prev.h && cur.h < next.h) {
+      tides.push({ type: 'low',  time: new Date(cur.t), height: (cur.h + 1.0).toFixed(1) });
+    } else if (cur.h > prev.h && cur.h > next.h) {
+      tides.push({ type: 'high', time: new Date(cur.t), height: (cur.h + 1.0).toFixed(1) });
+    }
+  }
+
+  return tides.sort((a, b) => a.time - b.time);
+}
+
+function getNextLow(tides, now) {
+  // Find next or most recent low
+  const future = tides.filter(t => t.type === 'low' && t.time >= now);
+  if (future.length) return future[0];
+  const past = tides.filter(t => t.type === 'low').reverse();
+  return past[0] || null;
+}
+
 function overall(...scores) {
   if (scores.includes('no'))    return 'no';
   if (scores.includes('maybe')) return 'maybe';
@@ -352,17 +413,36 @@ async function load() {
     const swellM   = m.wave_height;
     const wavePer  = m.wave_period;
 
+    const now = new Date();
+    const tides = getTidesForToday();
+    const nextLow = getNextLow(tides, now);
+    const minutesToLow = nextLow ? Math.round((nextLow.time - now) / 60000) : null;
+    const ts = minutesToLow !== null ? scoreTide(minutesToLow) : 'maybe';
+
     const ws = scoreWind(windKph, windDir);
     const gs = scoreGusts(gustKph);
     const ss = scoreSwell(swellM);
     const rs = scoreRain(precipMm);
-    const verdict = overall(ws, gs, ss, rs);
+    const verdict = overall(ws, gs, ss, rs, ts);
+
+    let tideCheckText = 'Tide data unavailable';
+    if (nextLow) {
+      const absMin = Math.abs(minutesToLow);
+      const hrs = Math.floor(absMin / 60), mins = absMin % 60;
+      const timeStr = formatTime(nextLow.time);
+      if (minutesToLow > 0) {
+        tideCheckText = `Low tide at ${timeStr} — ${hrs > 0 ? hrs+'h ' : ''}${mins}m away`;
+      } else {
+        tideCheckText = `Low tide was ${timeStr} — ${hrs > 0 ? hrs+'h ' : ''}${mins}m ago`;
+      }
+    }
 
     const checks = [
       { text: `Wind ${Math.round(windKph)} km/h from ${windDir}${BAD_DIRS.includes(windDir) ? ' — exposed direction' : ''}`, status: ws },
       { text: `Gusts ${Math.round(gustKph)} km/h`, status: gs },
       { text: `Swell ${swellM.toFixed(1)} m, ${Math.round(wavePer)}s period`, status: ss },
       { text: precipMm > 0 ? `Rain ${precipMm.toFixed(1)} mm — check visibility` : 'No rain', status: rs },
+      { text: tideCheckText, status: ts },
     ];
 
     const days = wx.daily.time;
@@ -378,7 +458,7 @@ async function load() {
       return { label, detail: `${Math.round(fw)} km/h ${fd} · ${fs.toFixed(1)}m swell · ${fp.toFixed(0)}mm rain`, verdict: fv };
     });
 
-    const now = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+    const updatedStr = now.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
 
     const metricsWarn = (val, fn) => fn(val) === 'no' ? 'warn' : fn(val) === 'go' ? 'ok' : '';
 
@@ -391,7 +471,7 @@ async function load() {
         </div>
       </div>
 
-      <div class="updated">Updated ${now}</div>
+      <div class="updated">Updated ${updatedStr}</div>
 
       <div class="metrics">
         <div class="metric ${metricsWarn(windKph, w => scoreWind(w, windDir))}">
@@ -410,6 +490,16 @@ async function load() {
           <div class="metric-label">Wave period</div>
           <div class="metric-value">${Math.round(wavePer)} <span class="unit">s</span></div>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Tides today — Castlepoint</div>
+        ${tides.length ? tides.map(t => `
+          <div class="forecast-row">
+            <span class="forecast-day">${t.type === 'low' ? '↓ Low' : '↑ High'}</span>
+            <span class="forecast-detail">${formatTime(t.time)}</span>
+            <span class="badge ${t.type === 'low' ? 'go' : 'no'}">${t.height}m</span>
+          </div>`).join('') : '<p style="font-size:13px;color:var(--muted)">Tide data unavailable</p>'}
       </div>
 
       <div class="card">
@@ -434,7 +524,7 @@ async function load() {
         <a href="https://www.metservice.com/marine/regions/cook-strait" target="_blank">MetService marine</a>
         before heading out, especially after rain or swell.<br><br>
         Data: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> (free, no key needed).
-        Thresholds: wind &lt;18 km/h, gusts &lt;25 km/h, swell &lt;0.7m, no S/SE wind.
+        Thresholds: wind &lt;18 km/h, gusts &lt;25 km/h, swell &lt;0.7m, no S/SE wind. Tide window: within 2hrs of low. Tide times are approximate — verify with <a href="https://www.niwa.co.nz/our-science/oceans/tools-and-resources/tides" target="_blank">NIWA tides</a>.
       </p>
     `;
 

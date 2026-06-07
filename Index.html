@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>White Rock — Dive Check</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e1112;
+    --bg2: #161a1c;
+    --bg3: #1d2225;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaeb;
+    --muted: #6b7780;
+    --accent: #4eb8a0;
+    --accent-dim: rgba(78,184,160,0.12);
+    --accent-border: rgba(78,184,160,0.3);
+    --go: #4eb8a0;
+    --go-bg: rgba(78,184,160,0.1);
+    --go-border: rgba(78,184,160,0.25);
+    --maybe: #d4a84b;
+    --maybe-bg: rgba(212,168,75,0.1);
+    --maybe-border: rgba(212,168,75,0.25);
+    --no: #d45f5f;
+    --no-bg: rgba(212,95,95,0.1);
+    --no-border: rgba(212,95,95,0.25);
+    --radius: 10px;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* Header */
+  .site-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .site-header h1 {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .site-header .sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-top: 3px;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+
+  .refresh-btn:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
+  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Status banner */
+  .status-banner {
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .status-banner.go   { background: var(--go-bg);    border-color: var(--go-border);    }
+  .status-banner.maybe{ background: var(--maybe-bg); border-color: var(--maybe-border); }
+  .status-banner.no   { background: var(--no-bg);    border-color: var(--no-border);    }
+
+  .status-icon { font-size: 28px; flex-shrink: 0; }
+  .go   .status-icon { color: var(--go);    }
+  .maybe .status-icon { color: var(--maybe); }
+  .no   .status-icon { color: var(--no);    }
+
+  .status-headline { font-size: 15px; font-weight: 500; }
+  .go   .status-headline { color: var(--go);    }
+  .maybe .status-headline { color: var(--maybe); }
+  .no   .status-headline { color: var(--no);    }
+
+  .status-issues { font-size: 12px; margin-top: 3px; }
+  .go   .status-issues { color: rgba(78,184,160,0.75);  }
+  .maybe .status-issues { color: rgba(212,168,75,0.75); }
+  .no   .status-issues { color: rgba(212,95,95,0.75);   }
+
+  /* Metrics */
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  .metric {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1rem;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .metric-value {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .metric-value .unit {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .metric.warn .metric-value { color: var(--no); }
+  .metric.ok   .metric-value { color: var(--go); }
+
+  /* Card */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* Checks */
+  .check-list { list-style: none; }
+  .check-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .check-list li:last-child { border-bottom: none; }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .dot.go    { background: var(--go);    }
+  .dot.maybe { background: var(--maybe); }
+  .dot.no    { background: var(--no);    }
+
+  /* Forecast */
+  .forecast-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .forecast-row:last-child { border-bottom: none; }
+  .forecast-day { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 70px; }
+  .forecast-detail { flex: 1; color: var(--text); }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    border: 1px solid;
+  }
+  .badge.go    { color: var(--go);    background: var(--go-bg);    border-color: var(--go-border);    }
+  .badge.maybe { color: var(--maybe); background: var(--maybe-bg); border-color: var(--maybe-border); }
+  .badge.no    { color: var(--no);    background: var(--no-bg);    border-color: var(--no-border);    }
+
+  /* Loading / error */
+  .loading, .error {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--muted);
+    padding: 2rem 0;
+    text-align: center;
+  }
+  .error { color: var(--no); }
+
+  /* Spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: -3px;
+    margin-right: 8px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .note {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    margin-top: 0.75rem;
+    line-height: 1.7;
+  }
+  .note a { color: var(--accent); text-decoration: none; }
+  .note a:hover { text-decoration: underline; }
+
+  .updated {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+    margin-top: -6px;
+    margin-bottom: 1rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site-header">
+    <div>
+      <h1>White Rock</h1>
+      <div class="sub">Wairarapa Coast &mdash; dive conditions</div>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="load()">↻ Refresh</button>
+  </header>
+
+  <div id="app"><p class="loading"><span class="spinner"></span>Fetching conditions...</p></div>
+
+</div>
+
+<script>
+const LAT = -41.52, LON = 175.23;
+const BAD_DIRS = ['S','SE','SSE','ESE'];
+
+function degToCard(d) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(d / 22.5) % 16];
+}
+
+function scoreWind(kph, dir) {
+  if (kph > 25) return 'no';
+  if (kph > 18 || BAD_DIRS.includes(dir)) return 'maybe';
+  return 'go';
+}
+function scoreGusts(kph) { return kph > 25 ? 'no' : kph > 18 ? 'maybe' : 'go'; }
+function scoreSwell(m)   { return m > 1.0 ? 'no' : m > 0.7 ? 'maybe' : 'go'; }
+function scoreRain(mm)   { return mm > 5 ? 'no' : mm > 2 ? 'maybe' : 'go'; }
+
+function overall(...scores) {
+  if (scores.includes('no'))    return 'no';
+  if (scores.includes('maybe')) return 'maybe';
+  return 'go';
+}
+
+function verdictLabel(v) { return v === 'go' ? 'Go' : v === 'maybe' ? 'Maybe' : 'Skip'; }
+function icon(v) { return v === 'go' ? '✓' : v === 'maybe' ? '⚠' : '✕'; }
+
+function headline(v) {
+  if (v === 'go')    return 'Conditions look good — get in the water';
+  if (v === 'maybe') return 'Marginal — use your judgement';
+  return 'Not a great day for it';
+}
+
+async function load() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  document.getElementById('app').innerHTML = '<p class="loading"><span class="spinner"></span>Fetching conditions...</p>';
+
+  try {
+    const [wxRes, marineRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation&daily=wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_sum&timezone=Pacific%2FAuckland&forecast_days=5`),
+      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,wave_period&daily=wave_height_max&timezone=Pacific%2FAuckland&forecast_days=5`)
+    ]);
+
+    if (!wxRes.ok || !marineRes.ok) throw new Error('API error');
+
+    const wx = await wxRes.json();
+    const marine = await marineRes.json();
+
+    const c = wx.current;
+    const m = marine.current;
+    const windDir  = degToCard(c.wind_direction_10m);
+    const windKph  = c.wind_speed_10m;
+    const gustKph  = c.wind_gusts_10m;
+    const precipMm = c.precipitation;
+    const swellM   = m.wave_height;
+    const wavePer  = m.wave_period;
+
+    const ws = scoreWind(windKph, windDir);
+    const gs = scoreGusts(gustKph);
+    const ss = scoreSwell(swellM);
+    const rs = scoreRain(precipMm);
+    const verdict = overall(ws, gs, ss, rs);
+
+    const checks = [
+      { text: `Wind ${Math.round(windKph)} km/h from ${windDir}${BAD_DIRS.includes(windDir) ? ' — exposed direction' : ''}`, status: ws },
+      { text: `Gusts ${Math.round(gustKph)} km/h`, status: gs },
+      { text: `Swell ${swellM.toFixed(1)} m, ${Math.round(wavePer)}s period`, status: ss },
+      { text: precipMm > 0 ? `Rain ${precipMm.toFixed(1)} mm — check visibility` : 'No rain', status: rs },
+    ];
+
+    const days = wx.daily.time;
+    const dayNames = ['Today','Tomorrow'];
+    const forecast = days.map((_, i) => {
+      const fw  = wx.daily.wind_speed_10m_max[i];
+      const fg  = wx.daily.wind_gusts_10m_max[i];
+      const fp  = wx.daily.precipitation_sum[i];
+      const fs  = marine.daily.wave_height_max[i];
+      const fd  = degToCard(wx.daily.wind_direction_10m_dominant[i]);
+      const fv  = overall(scoreWind(fw, fd), scoreGusts(fg), scoreSwell(fs), scoreRain(fp));
+      const label = dayNames[i] || new Date(days[i]).toLocaleDateString('en-NZ', { weekday: 'short' });
+      return { label, detail: `${Math.round(fw)} km/h ${fd} · ${fs.toFixed(1)}m swell · ${fp.toFixed(0)}mm rain`, verdict: fv };
+    });
+
+    const now = new Date().toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+
+    const metricsWarn = (val, fn) => fn(val) === 'no' ? 'warn' : fn(val) === 'go' ? 'ok' : '';
+
+    document.getElementById('app').innerHTML = `
+      <div class="status-banner ${verdict}">
+        <div class="status-icon">${icon(verdict)}</div>
+        <div>
+          <div class="status-headline">${headline(verdict)}</div>
+          <div class="status-issues">${checks.filter(c => c.status !== 'go').map(c => c.text).join(' · ') || 'All checks passed'}</div>
+        </div>
+      </div>
+
+      <div class="updated">Updated ${now}</div>
+
+      <div class="metrics">
+        <div class="metric ${metricsWarn(windKph, w => scoreWind(w, windDir))}">
+          <div class="metric-label">Wind</div>
+          <div class="metric-value">${Math.round(windKph)} <span class="unit">km/h ${windDir}</span></div>
+        </div>
+        <div class="metric ${metricsWarn(gustKph, scoreGusts)}">
+          <div class="metric-label">Gusts</div>
+          <div class="metric-value">${Math.round(gustKph)} <span class="unit">km/h</span></div>
+        </div>
+        <div class="metric ${metricsWarn(swellM, scoreSwell)}">
+          <div class="metric-label">Swell</div>
+          <div class="metric-value">${swellM.toFixed(1)} <span class="unit">m</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Wave period</div>
+          <div class="metric-value">${Math.round(wavePer)} <span class="unit">s</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Condition checks</div>
+        <ul class="check-list">
+          ${checks.map(c => `<li><span class="dot ${c.status}"></span>${c.text}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-label">5-day outlook</div>
+        ${forecast.map(f => `
+          <div class="forecast-row">
+            <span class="forecast-day">${f.label}</span>
+            <span class="forecast-detail">${f.detail}</span>
+            <span class="badge ${f.verdict}">${verdictLabel(f.verdict)}</span>
+          </div>`).join('')}
+      </div>
+
+      <p class="note">
+        Visibility isn't available from weather APIs — check
+        <a href="https://www.metservice.com/marine/regions/cook-strait" target="_blank">MetService marine</a>
+        before heading out, especially after rain or swell.<br><br>
+        Data: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> (free, no key needed).
+        Thresholds: wind &lt;18 km/h, gusts &lt;25 km/h, swell &lt;0.7m, no S/SE wind.
+      </p>
+    `;
+
+  } catch(e) {
+    document.getElementById('app').innerHTML = `<p class="error">⚠ Couldn't load conditions — ${e.message}.<br>Check your internet connection and try again.</p>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

@@ -3,539 +3,562 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>White Rock — Dive Check</title>
+<title>Wellington Spearfishing — Dive Check</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #0e1112;
-    --bg2: #161a1c;
-    --bg3: #1d2225;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --text: #e8eaeb;
-    --muted: #6b7780;
+    --bg: #0e1112; --bg2: #161a1c; --bg3: #1d2225;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --text: #e8eaeb; --muted: #6b7780;
     --accent: #4eb8a0;
-    --accent-dim: rgba(78,184,160,0.12);
-    --accent-border: rgba(78,184,160,0.3);
-    --go: #4eb8a0;
-    --go-bg: rgba(78,184,160,0.1);
-    --go-border: rgba(78,184,160,0.25);
-    --maybe: #d4a84b;
-    --maybe-bg: rgba(212,168,75,0.1);
-    --maybe-border: rgba(212,168,75,0.25);
-    --no: #d45f5f;
-    --no-bg: rgba(212,95,95,0.1);
-    --no-border: rgba(212,95,95,0.25);
-    --radius: 10px;
-    --mono: 'DM Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --go: #4eb8a0; --go-bg: rgba(78,184,160,0.1); --go-border: rgba(78,184,160,0.25);
+    --maybe: #d4a84b; --maybe-bg: rgba(212,168,75,0.1); --maybe-border: rgba(212,168,75,0.25);
+    --no: #d45f5f; --no-bg: rgba(212,95,95,0.1); --no-border: rgba(212,95,95,0.25);
+    --radius: 10px; --mono: 'DM Mono', monospace; --sans: 'DM Sans', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  .layout { display: grid; grid-template-columns: 340px 1fr; min-height: 100vh; }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } }
+
+  /* SIDEBAR */
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+  .sidebar-header { padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+  .sidebar-header h1 { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  .sidebar-header .sub { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+
+  /* Weekend rec banner */
+  .rec-banner { margin: 1rem 1.25rem 0; border-radius: var(--radius); padding: 0.85rem 1rem; border: 1px solid; }
+  .rec-banner.go    { background: var(--go-bg);    border-color: var(--go-border); }
+  .rec-banner.maybe { background: var(--maybe-bg); border-color: var(--maybe-border); }
+  .rec-banner.no    { background: var(--no-bg);    border-color: var(--no-border); }
+  .rec-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .rec-banner.go    .rec-label { color: var(--go); }
+  .rec-banner.maybe .rec-label { color: var(--maybe); }
+  .rec-banner.no    .rec-label { color: var(--no); }
+  .rec-name { font-size: 15px; font-weight: 500; }
+  .rec-banner.go    .rec-name { color: var(--go); }
+  .rec-banner.maybe .rec-name { color: var(--maybe); }
+  .rec-banner.no    .rec-name { color: var(--no); }
+  .rec-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Location list */
+  .loc-list { padding: 0.75rem 0; flex: 1; }
+  .loc-item { display: flex; align-items: center; gap: 10px; padding: 0.7rem 1.25rem; cursor: pointer; border-left: 2px solid transparent; transition: background 0.1s, border-color 0.1s; }
+  .loc-item:hover { background: var(--bg3); }
+  .loc-item.active { background: var(--bg3); border-left-color: var(--accent); }
+  .loc-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .loc-dot.go    { background: var(--go); }
+  .loc-dot.maybe { background: var(--maybe); }
+  .loc-dot.no    { background: var(--no); }
+  .loc-dot.loading { background: var(--muted); }
+  .loc-name { font-size: 14px; font-weight: 500; flex: 1; }
+  .loc-meta { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+  .loc-badge { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 20px; border: 1px solid; }
+  .loc-badge.go    { color: var(--go);    background: var(--go-bg);    border-color: var(--go-border); }
+  .loc-badge.maybe { color: var(--maybe); background: var(--maybe-bg); border-color: var(--maybe-border); }
+  .loc-badge.no    { color: var(--no);    background: var(--no-bg);    border-color: var(--no-border); }
+  .loc-badge.loading { color: var(--muted); background: transparent; border-color: var(--border2); }
+
+  /* MAP */
+  .map-panel { position: relative; }
+  #map { width: 100%; height: 100%; min-height: 300px; }
+  @media (max-width: 700px) { #map { height: 280px; } }
+
+  /* DETAIL PANEL */
+  .detail-panel { background: var(--bg); border-top: 1px solid var(--border); overflow-y: auto; max-height: 55vh; }
+  @media (min-width: 701px) {
+    .right-col { display: flex; flex-direction: column; }
+    .map-panel { flex: 0 0 320px; }
+    .detail-panel { flex: 1; max-height: none; }
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-    padding: 2rem 1rem 4rem;
-  }
+  .detail-inner { padding: 1.25rem; max-width: 680px; }
+  .detail-title { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
 
-  .wrap {
-    max-width: 560px;
-    margin: 0 auto;
-  }
+  .status-banner { border-radius: var(--radius); padding: 1rem 1.1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 12px; border: 1px solid; }
+  .status-banner.go    { background: var(--go-bg);    border-color: var(--go-border); }
+  .status-banner.maybe { background: var(--maybe-bg); border-color: var(--maybe-border); }
+  .status-banner.no    { background: var(--no-bg);    border-color: var(--no-border); }
+  .status-icon { font-size: 24px; flex-shrink: 0; }
+  .status-banner.go    .status-icon, .status-banner.go    .status-headline { color: var(--go); }
+  .status-banner.maybe .status-icon, .status-banner.maybe .status-headline { color: var(--maybe); }
+  .status-banner.no    .status-icon, .status-banner.no    .status-headline { color: var(--no); }
+  .status-headline { font-size: 14px; font-weight: 500; }
+  .status-issues { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  /* Header */
-  .site-header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .site-header h1 {
-    font-family: var(--mono);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--accent);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .site-header .sub {
-    font-size: 12px;
-    color: var(--muted);
-    font-family: var(--mono);
-    margin-top: 3px;
-  }
-
-  .refresh-btn {
-    background: none;
-    border: 1px solid var(--border2);
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 7px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
-  }
-
-  .refresh-btn:hover { color: var(--text); border-color: var(--border2); background: var(--bg3); }
-  .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  /* Status banner */
-  .status-banner {
-    border-radius: var(--radius);
-    padding: 1.1rem 1.25rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border: 1px solid;
-    animation: fadeUp 0.3s ease;
-  }
-
-  .status-banner.go   { background: var(--go-bg);    border-color: var(--go-border);    }
-  .status-banner.maybe{ background: var(--maybe-bg); border-color: var(--maybe-border); }
-  .status-banner.no   { background: var(--no-bg);    border-color: var(--no-border);    }
-
-  .status-icon { font-size: 28px; flex-shrink: 0; }
-  .go   .status-icon { color: var(--go);    }
-  .maybe .status-icon { color: var(--maybe); }
-  .no   .status-icon { color: var(--no);    }
-
-  .status-headline { font-size: 15px; font-weight: 500; }
-  .go   .status-headline { color: var(--go);    }
-  .maybe .status-headline { color: var(--maybe); }
-  .no   .status-headline { color: var(--no);    }
-
-  .status-issues { font-size: 12px; margin-top: 3px; }
-  .go   .status-issues { color: rgba(78,184,160,0.75);  }
-  .maybe .status-issues { color: rgba(212,168,75,0.75); }
-  .no   .status-issues { color: rgba(212,95,95,0.75);   }
-
-  /* Metrics */
-  .metrics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 1rem;
-  }
-
-  .metric {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.85rem 1rem;
-    animation: fadeUp 0.3s ease;
-  }
-
-  .metric-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
-
-  .metric-value {
-    font-family: var(--mono);
-    font-size: 20px;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .metric-value .unit {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  @media (max-width: 500px) { .metrics { grid-template-columns: 1fr 1fr; } }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.7rem 0.85rem; }
+  .metric-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .metric-value { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--text); }
+  .metric-value .unit { font-size: 11px; color: var(--muted); font-weight: 400; }
   .metric.warn .metric-value { color: var(--no); }
   .metric.ok   .metric-value { color: var(--go); }
 
-  /* Card */
-  .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-    animation: fadeUp 0.3s ease;
-  }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1rem; }
+  .card-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 
-  .card-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
-
-  /* Checks */
   .check-list { list-style: none; }
-  .check-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    font-size: 13px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-  }
+  .check-list li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); color: var(--text); }
   .check-list li:last-child { border-bottom: none; }
-
-  .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    margin-top: 5px;
-  }
-  .dot.go    { background: var(--go);    }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .dot.go    { background: var(--go); }
   .dot.maybe { background: var(--maybe); }
-  .dot.no    { background: var(--no);    }
+  .dot.no    { background: var(--no); }
 
-  /* Forecast */
-  .forecast-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-  }
+  .forecast-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .forecast-row:last-child { border-bottom: none; }
-  .forecast-day { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 70px; }
+  .forecast-day { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 65px; }
   .forecast-detail { flex: 1; color: var(--text); }
-  .badge {
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border-radius: 20px;
-    flex-shrink: 0;
-    border: 1px solid;
-  }
-  .badge.go    { color: var(--go);    background: var(--go-bg);    border-color: var(--go-border);    }
+  .badge { font-family: var(--mono); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; border: 1px solid; }
+  .badge.go    { color: var(--go);    background: var(--go-bg);    border-color: var(--go-border); }
   .badge.maybe { color: var(--maybe); background: var(--maybe-bg); border-color: var(--maybe-border); }
-  .badge.no    { color: var(--no);    background: var(--no-bg);    border-color: var(--no-border);    }
+  .badge.no    { color: var(--no);    background: var(--no-bg);    border-color: var(--no-border); }
 
-  /* Loading / error */
-  .loading, .error {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--muted);
-    padding: 2rem 0;
-    text-align: center;
-  }
-  .error { color: var(--no); }
+  /* Wind history */
+  .wind-history { display: flex; gap: 4px; flex-wrap: wrap; }
+  .wind-pip { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 36px; }
+  .wind-pip-dir { font-family: var(--mono); font-size: 10px; color: var(--text); font-weight: 500; }
+  .wind-pip-spd { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+  .wind-pip-time { font-family: var(--mono); font-size: 9px; color: var(--muted); }
+  .wind-arrow { font-size: 16px; }
+  .wind-arrow.bad { color: var(--no); }
+  .wind-arrow.ok  { color: var(--go); }
+  .wind-arrow.maybe { color: var(--maybe); }
 
-  /* Spinner */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner {
-    display: inline-block;
-    width: 14px; height: 14px;
-    border: 2px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: -3px;
-    margin-right: 8px;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .note {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--muted);
-    margin-top: 0.75rem;
-    line-height: 1.7;
-  }
+  .note { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-top: 0.5rem; line-height: 1.7; }
   .note a { color: var(--accent); text-decoration: none; }
   .note a:hover { text-decoration: underline; }
+  .updated { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 1rem; }
 
-  .updated {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--muted);
-    text-align: right;
-    margin-top: -6px;
-    margin-bottom: 1rem;
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  .loading-txt { font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 2rem 1.25rem; }
+
+  .refresh-btn { background: none; border: 1px solid var(--border2); color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 12px; border-radius: 6px; cursor: pointer; margin-top: 0.75rem; }
+  .refresh-btn:hover { background: var(--bg3); color: var(--text); }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="wrap">
 
-  <header class="site-header">
-    <div>
-      <h1>White Rock</h1>
-      <div class="sub">Wairarapa Coast &mdash; dive conditions</div>
+<div class="layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h1>Wellington Spearfishing</h1>
+      <div class="sub">Dive conditions checker</div>
+      <button class="refresh-btn" onclick="init()">↻ Refresh all</button>
     </div>
-    <button class="refresh-btn" id="refresh-btn" onclick="load()">↻ Refresh</button>
-  </header>
+    <div id="rec-area"></div>
+    <div class="loc-list" id="loc-list"></div>
+  </div>
 
-  <div id="app"><p class="loading"><span class="spinner"></span>Fetching conditions...</p></div>
-
+  <!-- RIGHT: map + detail -->
+  <div class="right-col" style="display:flex;flex-direction:column;">
+    <div class="map-panel" style="flex:0 0 320px;">
+      <div id="map"></div>
+    </div>
+    <div class="detail-panel" style="flex:1;overflow-y:auto;">
+      <div class="detail-inner" id="detail">
+        <p class="loading-txt"><span class="spinner"></span>Loading conditions...</p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const LAT = -41.52, LON = 175.23;
+const LOCATIONS = [
+  { id: 'whiterock',      name: 'White Rock',                lat: -41.520, lon: 175.230 },
+  { id: 'makara-north',   name: 'Makara (North of the Road)', lat: -41.222, lon: 174.704 },
+  { id: 'makara-south',   name: 'Makara (South of the Road)', lat: -41.238, lon: 174.695 },
+  { id: 'south-coast',    name: 'South Coast',                lat: -41.350, lon: 174.780 },
+  { id: 'wainuiomata',    name: 'Wainuiomata Coast',          lat: -41.380, lon: 175.050 },
+  { id: 'tora',           name: 'Tora',                       lat: -41.480, lon: 175.580 },
+];
+
 const BAD_DIRS = ['S','SE','SSE','ESE'];
+const state = {}; // id -> data
+let activeId = LOCATIONS[0].id;
+let map, markers = {};
 
 function degToCard(d) {
   const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
   return dirs[Math.round(d / 22.5) % 16];
 }
-
 function scoreWind(kph, dir) {
   if (kph > 25) return 'no';
   if (kph > 18 || BAD_DIRS.includes(dir)) return 'maybe';
   return 'go';
 }
-function scoreGusts(kph) { return kph > 25 ? 'no' : kph > 18 ? 'maybe' : 'go'; }
-function scoreSwell(m)   { return m > 1.0 ? 'no' : m > 0.7 ? 'maybe' : 'go'; }
-function scoreRain(mm)   { return mm > 5 ? 'no' : mm > 2 ? 'maybe' : 'go'; }
-
-// Tide scoring — want low tide (within 2hrs either side of low)
-function scoreTide(minutesToLow) {
-  const abs = Math.abs(minutesToLow);
-  if (abs <= 120) return 'go';
-  if (abs <= 180) return 'maybe';
-  return 'no';
-}
-
-function formatTime(date) {
-  return date.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
-
-// Compute tides using simplified harmonic calculation for Castlepoint
-// Principal M2 constituent for Castlepoint area
-function getTidesForToday() {
-  const now = new Date();
-  const tides = [];
-
-  // Castlepoint approximate tidal parameters
-  // M2 period ~12.42 hours, approximate phase offset for Castlepoint
-  const M2_PERIOD_MS = 12.4206 * 60 * 60 * 1000;
-  const S2_PERIOD_MS = 12.0 * 60 * 60 * 1000;
-  // Reference low tide anchor (approximate for Castlepoint)
-  // Using a known reference: low tide anchor Jan 1 2024 00:00 UTC
-  const REF_MS = new Date('2024-01-01T00:00:00Z').getTime();
-  const elapsed = now.getTime() - REF_MS;
-
-  // Generate tide extremes over next 48hrs
-  const startOfDay = new Date(now); startOfDay.setHours(0,0,0,0);
-  const endOfDay   = new Date(now); endOfDay.setHours(23,59,59,999);
-
-  // Sample every 10 mins, find local extremes
-  const samples = [];
-  for (let t = startOfDay.getTime() - M2_PERIOD_MS; t <= endOfDay.getTime() + M2_PERIOD_MS; t += 10*60*1000) {
-    const e = t - REF_MS;
-    const h = Math.cos(2 * Math.PI * e / M2_PERIOD_MS) * 0.7
-            + Math.cos(2 * Math.PI * e / S2_PERIOD_MS) * 0.2;
-    samples.push({ t, h });
-  }
-
-  for (let i = 1; i < samples.length - 1; i++) {
-    const prev = samples[i-1], cur = samples[i], next = samples[i+1];
-    if (cur.t < startOfDay.getTime() || cur.t > endOfDay.getTime()) continue;
-    if (cur.h < prev.h && cur.h < next.h) {
-      tides.push({ type: 'low',  time: new Date(cur.t), height: (cur.h + 1.0).toFixed(1) });
-    } else if (cur.h > prev.h && cur.h > next.h) {
-      tides.push({ type: 'high', time: new Date(cur.t), height: (cur.h + 1.0).toFixed(1) });
-    }
-  }
-
-  return tides.sort((a, b) => a.time - b.time);
-}
-
-function getNextLow(tides, now) {
-  // Find next or most recent low
-  const future = tides.filter(t => t.type === 'low' && t.time >= now);
-  if (future.length) return future[0];
-  const past = tides.filter(t => t.type === 'low').reverse();
-  return past[0] || null;
-}
-
-function overall(...scores) {
-  if (scores.includes('no'))    return 'no';
-  if (scores.includes('maybe')) return 'maybe';
-  return 'go';
-}
-
-function verdictLabel(v) { return v === 'go' ? 'Go' : v === 'maybe' ? 'Maybe' : 'Skip'; }
-function icon(v) { return v === 'go' ? '✓' : v === 'maybe' ? '⚠' : '✕'; }
-
+function scoreGusts(kph)  { return kph > 25 ? 'no' : kph > 18 ? 'maybe' : 'go'; }
+function scoreSwell(m)    { return m > 1.0  ? 'no' : m > 0.7  ? 'maybe' : 'go'; }
+function scoreRain(mm)    { return mm > 5   ? 'no' : mm > 2   ? 'maybe' : 'go'; }
+function scoreTide(mins)  { const a = Math.abs(mins); return a <= 120 ? 'go' : a <= 180 ? 'maybe' : 'no'; }
+function overall(...s)    { return s.includes('no') ? 'no' : s.includes('maybe') ? 'maybe' : 'go'; }
+function verdictLabel(v)  { return v === 'go' ? 'Go' : v === 'maybe' ? 'Maybe' : 'Skip'; }
+function icon(v)          { return v === 'go' ? '✓' : v === 'maybe' ? '⚠' : '✕'; }
 function headline(v) {
-  if (v === 'go')    return 'Conditions look good — get in the water';
+  if (v === 'go')    return 'Conditions look good — get in';
   if (v === 'maybe') return 'Marginal — use your judgement';
-  return 'Not a great day for it';
+  return 'Not worth it today';
 }
+function fmtTime(d) { return d.toLocaleTimeString('en-NZ', { hour: 'numeric', minute: '2-digit', hour12: true }); }
+function windDirScore(dir) { return BAD_DIRS.includes(dir) ? 'bad' : 'ok'; }
 
-async function load() {
-  const btn = document.getElementById('refresh-btn');
-  btn.disabled = true;
-  document.getElementById('app').innerHTML = '<p class="loading"><span class="spinner"></span>Fetching conditions...</p>';
-
-  try {
-    const [wxRes, marineRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation&daily=wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_sum&timezone=Pacific%2FAuckland&forecast_days=5`),
-      fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&current=wave_height,wave_period&daily=wave_height_max&timezone=Pacific%2FAuckland&forecast_days=5`)
-    ]);
-
-    if (!wxRes.ok || !marineRes.ok) throw new Error('API error');
-
-    const wx = await wxRes.json();
-    const marine = await marineRes.json();
-
-    const c = wx.current;
-    const m = marine.current;
-    const windDir  = degToCard(c.wind_direction_10m);
-    const windKph  = c.wind_speed_10m;
-    const gustKph  = c.wind_gusts_10m;
-    const precipMm = c.precipitation;
-    const swellM   = m.wave_height;
-    const wavePer  = m.wave_period;
-
-    const now = new Date();
-    const tides = getTidesForToday();
-    const nextLow = getNextLow(tides, now);
-    const minutesToLow = nextLow ? Math.round((nextLow.time - now) / 60000) : null;
-    const ts = minutesToLow !== null ? scoreTide(minutesToLow) : 'maybe';
-
-    const ws = scoreWind(windKph, windDir);
-    const gs = scoreGusts(gustKph);
-    const ss = scoreSwell(swellM);
-    const rs = scoreRain(precipMm);
-    const verdict = overall(ws, gs, ss, rs, ts);
-
-    let tideCheckText = 'Tide data unavailable';
-    if (nextLow) {
-      const absMin = Math.abs(minutesToLow);
-      const hrs = Math.floor(absMin / 60), mins = absMin % 60;
-      const timeStr = formatTime(nextLow.time);
-      if (minutesToLow > 0) {
-        tideCheckText = `Low tide at ${timeStr} — ${hrs > 0 ? hrs+'h ' : ''}${mins}m away`;
-      } else {
-        tideCheckText = `Low tide was ${timeStr} — ${hrs > 0 ? hrs+'h ' : ''}${mins}m ago`;
-      }
-    }
-
-    const checks = [
-      { text: `Wind ${Math.round(windKph)} km/h from ${windDir}${BAD_DIRS.includes(windDir) ? ' — exposed direction' : ''}`, status: ws },
-      { text: `Gusts ${Math.round(gustKph)} km/h`, status: gs },
-      { text: `Swell ${swellM.toFixed(1)} m, ${Math.round(wavePer)}s period`, status: ss },
-      { text: precipMm > 0 ? `Rain ${precipMm.toFixed(1)} mm — check visibility` : 'No rain', status: rs },
-      { text: tideCheckText, status: ts },
-    ];
-
-    const days = wx.daily.time;
-    const dayNames = ['Today','Tomorrow'];
-    const forecast = days.map((_, i) => {
-      const fw  = wx.daily.wind_speed_10m_max[i];
-      const fg  = wx.daily.wind_gusts_10m_max[i];
-      const fp  = wx.daily.precipitation_sum[i];
-      const fs  = marine.daily.wave_height_max[i];
-      const fd  = degToCard(wx.daily.wind_direction_10m_dominant[i]);
-      const fv  = overall(scoreWind(fw, fd), scoreGusts(fg), scoreSwell(fs), scoreRain(fp));
-      const label = dayNames[i] || new Date(days[i]).toLocaleDateString('en-NZ', { weekday: 'short' });
-      return { label, detail: `${Math.round(fw)} km/h ${fd} · ${fs.toFixed(1)}m swell · ${fp.toFixed(0)}mm rain`, verdict: fv };
-    });
-
-    const updatedStr = now.toLocaleTimeString('en-NZ', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
-
-    const metricsWarn = (val, fn) => fn(val) === 'no' ? 'warn' : fn(val) === 'go' ? 'ok' : '';
-
-    document.getElementById('app').innerHTML = `
-      <div class="status-banner ${verdict}">
-        <div class="status-icon">${icon(verdict)}</div>
-        <div>
-          <div class="status-headline">${headline(verdict)}</div>
-          <div class="status-issues">${checks.filter(c => c.status !== 'go').map(c => c.text).join(' · ') || 'All checks passed'}</div>
-        </div>
-      </div>
-
-      <div class="updated">Updated ${updatedStr}</div>
-
-      <div class="metrics">
-        <div class="metric ${metricsWarn(windKph, w => scoreWind(w, windDir))}">
-          <div class="metric-label">Wind</div>
-          <div class="metric-value">${Math.round(windKph)} <span class="unit">km/h ${windDir}</span></div>
-        </div>
-        <div class="metric ${metricsWarn(gustKph, scoreGusts)}">
-          <div class="metric-label">Gusts</div>
-          <div class="metric-value">${Math.round(gustKph)} <span class="unit">km/h</span></div>
-        </div>
-        <div class="metric ${metricsWarn(swellM, scoreSwell)}">
-          <div class="metric-label">Swell</div>
-          <div class="metric-value">${swellM.toFixed(1)} <span class="unit">m</span></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Wave period</div>
-          <div class="metric-value">${Math.round(wavePer)} <span class="unit">s</span></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Tides today — Castlepoint</div>
-        ${tides.length ? tides.map(t => `
-          <div class="forecast-row">
-            <span class="forecast-day">${t.type === 'low' ? '↓ Low' : '↑ High'}</span>
-            <span class="forecast-detail">${formatTime(t.time)}</span>
-            <span class="badge ${t.type === 'low' ? 'go' : 'no'}">${t.height}m</span>
-          </div>`).join('') : '<p style="font-size:13px;color:var(--muted)">Tide data unavailable</p>'}
-      </div>
-
-      <div class="card">
-        <div class="card-label">Condition checks</div>
-        <ul class="check-list">
-          ${checks.map(c => `<li><span class="dot ${c.status}"></span>${c.text}</li>`).join('')}
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-label">5-day outlook</div>
-        ${forecast.map(f => `
-          <div class="forecast-row">
-            <span class="forecast-day">${f.label}</span>
-            <span class="forecast-detail">${f.detail}</span>
-            <span class="badge ${f.verdict}">${verdictLabel(f.verdict)}</span>
-          </div>`).join('')}
-      </div>
-
-      <p class="note">
-        Visibility isn't available from weather APIs — check
-        <a href="https://www.metservice.com/marine/regions/cook-strait" target="_blank">MetService marine</a>
-        before heading out, especially after rain or swell.<br><br>
-        Data: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a> (free, no key needed).
-        Thresholds: wind &lt;18 km/h, gusts &lt;25 km/h, swell &lt;0.7m, no S/SE wind. Tide window: within 2hrs of low. Tide times are approximate — verify with <a href="https://www.niwa.co.nz/our-science/oceans/tools-and-resources/tides" target="_blank">NIWA tides</a>.
-      </p>
-    `;
-
-  } catch(e) {
-    document.getElementById('app').innerHTML = `<p class="error">⚠ Couldn't load conditions — ${e.message}.<br>Check your internet connection and try again.</p>`;
-  } finally {
-    btn.disabled = false;
+function getTides() {
+  const M2 = 12.4206 * 3600 * 1000, S2 = 12.0 * 3600 * 1000;
+  const REF = new Date('2024-01-01T00:00:00Z').getTime();
+  const now = new Date();
+  const start = new Date(now); start.setHours(0,0,0,0);
+  const end   = new Date(now); end.setHours(23,59,59,999);
+  const samples = [];
+  for (let t = start.getTime() - M2; t <= end.getTime() + M2; t += 600000) {
+    const e = t - REF;
+    samples.push({ t, h: Math.cos(2*Math.PI*e/M2)*0.7 + Math.cos(2*Math.PI*e/S2)*0.2 });
   }
+  const tides = [];
+  for (let i = 1; i < samples.length-1; i++) {
+    const [pt,ph] = [samples[i-1].t, samples[i-1].h];
+    const [ct,ch] = [samples[i].t,   samples[i].h];
+    const [nt,nh] = [samples[i+1].t, samples[i+1].h];
+    if (ct < start.getTime() || ct > end.getTime()) continue;
+    if (ch < ph && ch < nh) tides.push({ type:'low',  time: new Date(ct), height: (ch+1.0).toFixed(1) });
+    if (ch > ph && ch > nh) tides.push({ type:'high', time: new Date(ct), height: (ch+1.0).toFixed(1) });
+  }
+  return tides.sort((a,b) => a.time - b.time);
 }
 
-load();
+function getNextLow(tides) {
+  const now = new Date();
+  const future = tides.filter(t => t.type==='low' && t.time >= now);
+  if (future.length) return future[0];
+  return tides.filter(t => t.type==='low').slice(-1)[0] || null;
+}
+
+async function fetchLocation(loc) {
+  const [wxRes, marineRes] = await Promise.all([
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&current=wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation&daily=wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,precipitation_sum&hourly=wind_speed_10m,wind_direction_10m&timezone=Pacific%2FAuckland&forecast_days=5&past_days=3`),
+    fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${loc.lat}&longitude=${loc.lon}&current=wave_height,wave_period&daily=wave_height_max&timezone=Pacific%2FAuckland&forecast_days=5`)
+  ]);
+  if (!wxRes.ok || !marineRes.ok) throw new Error('API error');
+  return { wx: await wxRes.json(), marine: await marineRes.json() };
+}
+
+function processLocation(loc, raw) {
+  const c = raw.wx.current, m = raw.marine.current;
+  const windDir = degToCard(c.wind_direction_10m);
+  const windKph = c.wind_speed_10m, gustKph = c.wind_gusts_10m;
+  const precip  = c.precipitation,  swellM  = m.wave_height, wavePer = m.wave_period;
+
+  const tides  = getTides();
+  const nextLow = getNextLow(tides);
+  const minsToLow = nextLow ? Math.round((nextLow.time - new Date()) / 60000) : null;
+  const ts = minsToLow !== null ? scoreTide(minsToLow) : 'maybe';
+
+  const ws = scoreWind(windKph, windDir), gs = scoreGusts(gustKph);
+  const ss = scoreSwell(swellM),           rs = scoreRain(precip);
+  const verdict = overall(ws, gs, ss, rs, ts);
+
+  // Wind history — last 72 hours, sample every 6hrs
+  const times = raw.wx.hourly.time;
+  const wspeeds = raw.wx.hourly.wind_speed_10m;
+  const wdirs   = raw.wx.hourly.wind_direction_10m;
+  const now = new Date();
+  const history = [];
+  for (let i = times.length - 1; i >= 0; i--) {
+    const t = new Date(times[i]);
+    const hoursAgo = (now - t) / 3600000;
+    if (hoursAgo > 72 || hoursAgo < 0) continue;
+    if (history.length < 12 && (history.length === 0 || (now - t)/3600000 % 6 < 1)) {
+      history.unshift({ time: t, kph: wspeeds[i], dir: degToCard(wdirs[i]) });
+    }
+  }
+  // Sample every 6 hours from past 72
+  const histSampled = [];
+  for (let i = 0; i < times.length; i++) {
+    const t = new Date(times[i]);
+    const hoursAgo = (now - t) / 3600000;
+    if (hoursAgo > 72 || hoursAgo < 1) continue;
+    if (t.getHours() % 6 === 0) {
+      histSampled.push({ time: t, kph: wspeeds[i], dir: degToCard(wdirs[i]) });
+    }
+  }
+
+  // Weekend scores (Sat + Sun of nearest weekend)
+  const days = raw.wx.daily.time;
+  const weekendScores = [];
+  for (let i = 0; i < days.length; i++) {
+    const d = new Date(days[i]);
+    const dow = d.getDay();
+    if (dow === 6 || dow === 0) {
+      const fw = raw.wx.daily.wind_speed_10m_max[i];
+      const fg = raw.wx.daily.wind_gusts_10m_max[i];
+      const fp = raw.wx.daily.precipitation_sum[i];
+      const fs = raw.marine.daily.wave_height_max[i];
+      const fd = degToCard(raw.wx.daily.wind_direction_10m_dominant[i]);
+      weekendScores.push(overall(scoreWind(fw,fd), scoreGusts(fg), scoreSwell(fs), scoreRain(fp)));
+    }
+  }
+  const weekendVerdict = weekendScores.length
+    ? overall(...weekendScores)
+    : verdict;
+
+  // Tide text
+  let tideText = 'Tide data unavailable';
+  if (nextLow) {
+    const a = Math.abs(minsToLow), h = Math.floor(a/60), mn = a%60;
+    const ts2 = fmtTime(nextLow.time);
+    tideText = minsToLow > 0
+      ? `Low tide at ${ts2} — ${h>0?h+'h ':''}${mn}m away`
+      : `Low tide was ${ts2} — ${h>0?h+'h ':''}${mn}m ago`;
+  }
+
+  return {
+    verdict, weekendVerdict, windDir, windKph, gustKph, precip, swellM, wavePer,
+    ws, gs, ss, rs, ts, tides, tideText, histSampled,
+    daily: { time: days, wind: raw.wx.daily.wind_speed_10m_max, gusts: raw.wx.daily.wind_gusts_10m_max,
+             rain: raw.wx.daily.precipitation_sum, swell: raw.marine.daily.wave_height_max,
+             dir: raw.wx.daily.wind_direction_10m_dominant }
+  };
+}
+
+function markerColor(verdict) {
+  return verdict === 'go' ? '#4eb8a0' : verdict === 'maybe' ? '#d4a84b' : '#d45f5f';
+}
+
+function makeMarker(loc, verdict) {
+  const color = markerColor(verdict || 'loading');
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid rgba(0,0,0,0.4);box-shadow:0 0 0 3px ${color}33;"></div>`,
+    iconSize: [14,14], iconAnchor: [7,7]
+  });
+  const marker = L.marker([loc.lat, loc.lon], { icon })
+    .addTo(map)
+    .on('click', () => selectLocation(loc.id));
+  marker.bindTooltip(loc.name, { permanent: false, className: 'map-tooltip' });
+  return marker;
+}
+
+function updateMarker(id, verdict) {
+  if (markers[id]) { markers[id].remove(); }
+  const loc = LOCATIONS.find(l => l.id === id);
+  markers[id] = makeMarker(loc, verdict);
+}
+
+function renderLocList() {
+  const el = document.getElementById('loc-list');
+  el.innerHTML = LOCATIONS.map(loc => {
+    const d = state[loc.id];
+    const v = d ? d.verdict : 'loading';
+    const meta = d ? `${Math.round(d.windKph)} km/h ${d.windDir} · ${d.swellM.toFixed(1)}m` : '...';
+    return `<div class="loc-item ${loc.id === activeId ? 'active' : ''}" onclick="selectLocation('${loc.id}')">
+      <div class="loc-dot ${v}"></div>
+      <div style="flex:1">
+        <div class="loc-name">${loc.name}</div>
+        <div class="loc-meta">${meta}</div>
+      </div>
+      <div class="loc-badge ${v}">${v === 'loading' ? '...' : verdictLabel(v)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderRec() {
+  const loaded = LOCATIONS.filter(l => state[l.id]);
+  if (!loaded.length) { document.getElementById('rec-area').innerHTML = ''; return; }
+
+  // Best weekend spot
+  const ranked = loaded.sort((a,b) => {
+    const order = { go:0, maybe:1, no:2 };
+    return order[state[a.id].weekendVerdict] - order[state[b.id].weekendVerdict];
+  });
+  const best = ranked[0];
+  const d = state[best.id];
+  const v = d.weekendVerdict;
+
+  document.getElementById('rec-area').innerHTML = `
+    <div class="rec-banner ${v}" onclick="selectLocation('${best.id}')" style="cursor:pointer">
+      <div class="rec-label">Best this weekend</div>
+      <div class="rec-name">${best.name}</div>
+      <div class="rec-detail">${Math.round(d.windKph)} km/h ${d.windDir} · ${d.swellM.toFixed(1)}m swell</div>
+    </div>`;
+}
+
+function renderDetail(id) {
+  const loc = LOCATIONS.find(l => l.id === id);
+  const d = state[id];
+  if (!d) {
+    document.getElementById('detail').innerHTML = `<p class="loading-txt"><span class="spinner"></span>Loading ${loc.name}...</p>`;
+    return;
+  }
+
+  const checks = [
+    { text: `Wind ${Math.round(d.windKph)} km/h from ${d.windDir}${BAD_DIRS.includes(d.windDir) ? ' — exposed direction' : ''}`, status: d.ws },
+    { text: `Gusts ${Math.round(d.gustKph)} km/h`, status: d.gs },
+    { text: `Swell ${d.swellM.toFixed(1)} m, ${Math.round(d.wavePer)}s period`, status: d.ss },
+    { text: d.precip > 0 ? `Rain ${d.precip.toFixed(1)} mm` : 'No rain', status: d.rs },
+    { text: d.tideText, status: d.ts },
+  ];
+
+  const days = d.daily.time;
+  const dayNames = ['Today','Tomorrow'];
+  const forecastRows = days.map((_, i) => {
+    const fw = d.daily.wind[i], fg = d.daily.gusts[i], fp = d.daily.rain[i], fs = d.daily.swell[i];
+    const fd = degToCard(d.daily.dir[i]);
+    const fv = overall(scoreWind(fw,fd), scoreGusts(fg), scoreSwell(fs), scoreRain(fp));
+    const label = dayNames[i] || new Date(days[i]).toLocaleDateString('en-NZ', { weekday:'short' });
+    return `<div class="forecast-row">
+      <span class="forecast-day">${label}</span>
+      <span class="forecast-detail">${Math.round(fw)} km/h ${fd} · ${fs.toFixed(1)}m · ${fp.toFixed(0)}mm</span>
+      <span class="badge ${fv}">${verdictLabel(fv)}</span>
+    </div>`;
+  }).join('');
+
+  // Wind history pips
+  const histHtml = d.histSampled.length ? d.histSampled.map(h => {
+    const cls = BAD_DIRS.includes(h.dir) ? 'bad' : h.kph > 18 ? 'maybe' : 'ok';
+    return `<div class="wind-pip">
+      <div class="wind-pip-time">${h.time.toLocaleDateString('en-NZ',{weekday:'short'})} ${h.time.getHours().toString().padStart(2,'0')}:00</div>
+      <div class="wind-arrow ${cls}">↑</div>
+      <div class="wind-pip-dir">${h.dir}</div>
+      <div class="wind-pip-spd">${Math.round(h.kph)}</div>
+    </div>`;
+  }).join('') : '<span style="font-size:13px;color:var(--muted)">No history available</span>';
+
+  const now = new Date();
+  const updStr = now.toLocaleTimeString('en-NZ', { hour:'2-digit', minute:'2-digit', timeZoneName:'short' });
+
+  document.getElementById('detail').innerHTML = `
+    <div class="detail-title">${loc.name}</div>
+    <div class="updated">Updated ${updStr}</div>
+
+    <div class="status-banner ${d.verdict}">
+      <div class="status-icon">${icon(d.verdict)}</div>
+      <div>
+        <div class="status-headline">${headline(d.verdict)}</div>
+        <div class="status-issues">${checks.filter(c=>c.status!=='go').map(c=>c.text).join(' · ') || 'All checks passed'}</div>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric ${d.ws==='no'?'warn':d.ws==='go'?'ok':''}">
+        <div class="metric-label">Wind</div>
+        <div class="metric-value">${Math.round(d.windKph)} <span class="unit">km/h ${d.windDir}</span></div>
+      </div>
+      <div class="metric ${d.gs==='no'?'warn':d.gs==='go'?'ok':''}">
+        <div class="metric-label">Gusts</div>
+        <div class="metric-value">${Math.round(d.gustKph)} <span class="unit">km/h</span></div>
+      </div>
+      <div class="metric ${d.ss==='no'?'warn':d.ss==='go'?'ok':''}">
+        <div class="metric-label">Swell</div>
+        <div class="metric-value">${d.swellM.toFixed(1)} <span class="unit">m</span></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Period</div>
+        <div class="metric-value">${Math.round(d.wavePer)} <span class="unit">s</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Wind — last 3 days (${BAD_DIRS.join(', ')} = bad for vis)</div>
+      <div class="wind-history">${histHtml}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Tides today — Castlepoint</div>
+      ${d.tides.map(t => `
+        <div class="forecast-row">
+          <span class="forecast-day">${t.type==='low'?'↓ Low':'↑ High'}</span>
+          <span class="forecast-detail">${fmtTime(t.time)}</span>
+          <span class="badge ${t.type==='low'?'go':'no'}">${t.height}m</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="card">
+      <div class="card-label">Condition checks</div>
+      <ul class="check-list">
+        ${checks.map(c=>`<li><span class="dot ${c.status}"></span>${c.text}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-label">5-day outlook</div>
+      ${forecastRows}
+    </div>
+
+    <p class="note">
+      Visibility not in weather APIs — check <a href="https://www.metservice.com/marine/regions/cook-strait" target="_blank">MetService marine</a> before heading out.
+      Tides are approximate — verify with <a href="https://www.niwa.co.nz/our-science/oceans/tools-and-resources/tides" target="_blank">NIWA tides</a>.
+      Data: <a href="https://open-meteo.com" target="_blank">Open-Meteo</a>.
+    </p>
+  `;
+}
+
+function selectLocation(id) {
+  activeId = id;
+  renderLocList();
+  renderDetail(id);
+  const loc = LOCATIONS.find(l => l.id === id);
+  map.setView([loc.lat, loc.lon], 11);
+  // Highlight marker
+  Object.entries(markers).forEach(([mid, m]) => {
+    const color = state[mid] ? markerColor(state[mid].verdict) : '#6b7780';
+    const size = mid === id ? 18 : 14;
+    const border = mid === id ? '2.5px solid white' : '2px solid rgba(0,0,0,0.4)';
+    m.setIcon(L.divIcon({
+      className: '',
+      html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:${border};box-shadow:0 0 0 3px ${color}44;"></div>`,
+      iconSize: [size,size], iconAnchor: [size/2,size/2]
+    }));
+  });
+}
+
+async function init() {
+  renderLocList();
+  renderDetail(activeId);
+
+  // Load all locations in parallel
+  await Promise.allSettled(LOCATIONS.map(async loc => {
+    try {
+      const raw = await fetchLocation(loc);
+      state[loc.id] = processLocation(loc, raw);
+      updateMarker(loc.id, state[loc.id].verdict);
+    } catch(e) {
+      state[loc.id] = null;
+    }
+    renderLocList();
+    renderRec();
+    if (loc.id === activeId) renderDetail(activeId);
+  }));
+}
+
+// Init map
+window.addEventListener('DOMContentLoaded', () => {
+  map = L.map('map', {
+    center: [-41.32, 174.95],
+    zoom: 9,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(map);
+
+  // Add loading markers
+  LOCATIONS.forEach(loc => {
+    markers[loc.id] = makeMarker(loc, null);
+  });
+
+  init();
+});
 </script>
+<style>
+.map-tooltip { background: #161a1c; border: 1px solid rgba(255,255,255,0.15); color: #e8eaeb; font-family: 'DM Mono', monospace; font-size: 11px; padding: 4px 8px; border-radius: 5px; box-shadow: none; }
+.leaflet-tooltip-top:before { border-top-color: rgba(255,255,255,0.15); }
+</style>
 </body>
 </html>

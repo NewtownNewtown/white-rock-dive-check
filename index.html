@@ -251,15 +251,18 @@ function processLocation(loc, raw) {
   const c = raw.wx.current, m = raw.marine.current;
   const windDir = degToCard(c.wind_direction_10m);
   const windKph = c.wind_speed_10m, gustKph = c.wind_gusts_10m;
-  const precip  = c.precipitation,  swellM  = m.wave_height, wavePer = m.wave_period;
+  const precip  = c.precipitation ?? 0;
+  const swellM  = m.wave_height ?? null;
+  const wavePer = m.wave_period ?? null;
 
-  const tides  = getTides();
+  const tides = getTides();
   const nextLow = getNextLow(tides);
   const minsToLow = nextLow ? Math.round((nextLow.time - new Date()) / 60000) : null;
   const ts = minsToLow !== null ? scoreTide(minsToLow) : 'maybe';
 
   const ws = scoreWind(windKph, windDir), gs = scoreGusts(gustKph);
-  const ss = scoreSwell(swellM),           rs = scoreRain(precip);
+  const ss = swellM != null ? scoreSwell(swellM) : 'maybe';
+  const rs = scoreRain(precip);
   const verdict = overall(ws, gs, ss, rs, ts);
 
   // Wind history — last 72 hours, sample every 6hrs
@@ -398,7 +401,7 @@ function renderDetail(id) {
   const checks = [
     { text: `Wind ${Math.round(d.windKph)} km/h from ${d.windDir}${BAD_DIRS.includes(d.windDir) ? ' — exposed direction' : ''}`, status: d.ws },
     { text: `Gusts ${Math.round(d.gustKph)} km/h`, status: d.gs },
-    { text: `Swell ${d.swellM.toFixed(1)} m, ${Math.round(d.wavePer)}s period`, status: d.ss },
+    { text: d.swellM != null ? `Swell ${d.swellM.toFixed(1)} m, ${Math.round(d.wavePer)}s period` : 'Swell data unavailable', status: d.ss },
     { text: d.precip > 0 ? `Rain ${d.precip.toFixed(1)} mm` : 'No rain', status: d.rs },
     { text: d.tideText, status: d.ts },
   ];
@@ -406,13 +409,14 @@ function renderDetail(id) {
   const days = d.daily.time;
   const dayNames = ['Today','Tomorrow'];
   const forecastRows = days.map((_, i) => {
-    const fw = d.daily.wind[i], fg = d.daily.gusts[i], fp = d.daily.rain[i], fs = d.daily.swell[i];
-    const fd = degToCard(d.daily.dir[i]);
-    const fv = overall(scoreWind(fw,fd), scoreGusts(fg), scoreSwell(fs), scoreRain(fp));
+    const fw = d.daily.wind[i] ?? 0, fg = d.daily.gusts[i] ?? 0, fp = d.daily.rain[i] ?? 0, fs = d.daily.swell[i] ?? null;
+    const fd = degToCard(d.daily.dir[i] ?? 0);
+    const fv = overall(scoreWind(fw,fd), scoreGusts(fg), fs != null ? scoreSwell(fs) : 'maybe', scoreRain(fp));
     const label = dayNames[i] || new Date(days[i]).toLocaleDateString('en-NZ', { weekday:'short' });
+    const swellStr = fs != null ? `${fs.toFixed(1)}m · ` : '';
     return `<div class="forecast-row">
       <span class="forecast-day">${label}</span>
-      <span class="forecast-detail">${Math.round(fw)} km/h ${fd} · ${fs.toFixed(1)}m · ${fp.toFixed(0)}mm</span>
+      <span class="forecast-detail">${Math.round(fw)} km/h ${fd} · ${swellStr}${fp.toFixed(0)}mm rain</span>
       <span class="badge ${fv}">${verdictLabel(fv)}</span>
     </div>`;
   }).join('');
